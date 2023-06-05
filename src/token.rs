@@ -1,0 +1,22 @@
+#[derive(Debug, Eq, PartialEq)]
+pub enum Token {
+    Invalid,
+    Eof,
+    Ident(String),
+    Int(String),
+    Assign,
+    Plus,
+    Comma,
+    Semicolon,
+    Lparen,
+    Rparen,
+    Lbrace,
+    Rbrace,
+    Function,
+    Let,
+    If,
+    False,
+    True,
+    Return,
+    Else,
+}
