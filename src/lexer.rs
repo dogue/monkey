@@ -1,4 +1,4 @@
-use crate::token::*;
+use crate::token::Token;
 
 #[derive(Debug)]
 pub struct Lexer {
@@ -39,17 +39,17 @@ impl Lexer {
         self.skip_whitespace();
 
         let token = match self.ch {
-            b'=' => Token::Assign,
-            b';' => Token::Semicolon,
-            b'(' => Token::Lparen,
-            b')' => Token::Rparen,
             b'{' => Token::Lbrace,
             b'}' => Token::Rbrace,
+            b'(' => Token::Lparen,
+            b')' => Token::Rparen,
             b',' => Token::Comma,
+            b';' => Token::Semicolon,
             b'+' => Token::Plus,
+            b'=' => Token::Assign,
             b'a'..=b'z' | b'A'..=b'Z' | b'_' => {
                 let ident = self.read_ident();
-                match ident.as_str() {
+                return match ident.as_str() {
                     "fn" => Token::Function,
                     "let" => Token::Let,
                     "if" => Token::If,
@@ -58,10 +58,10 @@ impl Lexer {
                     "return" => Token::Return,
                     "else" => Token::Else,
                     _ => Token::Ident(ident),
-                }
+                };
             }
-            b'0'..=b'9' => Token::Int(self.read_int()),
-            b'0' => Token::Eof,
+            b'0'..=b'9' => return Token::Int(self.read_int()),
+            0 => Token::Eof,
             _ => Token::Invalid,
         };
 
@@ -101,23 +101,22 @@ mod test {
 
     #[test]
     fn test_next_token() {
-        let input = r#"let five = 5;
+        let input = "let five = 5 ;
         let ten = 10;
         
         let add = fn(x, y) {
             x + y
         };
         
-        let result = add(five, ten)"#;
+        let result = add(five, ten)";
 
         let mut lexer = Lexer::new(input.into());
         let mut tokens: Vec<Token> = vec![];
 
         loop {
             let token = lexer.next_token();
-
             match token {
-                Token::Eof | Token::Invalid => break,
+                Token::Eof => break,
                 _ => tokens.push(token),
             }
         }
@@ -132,6 +131,7 @@ mod test {
             Token::Ident("ten".into()),
             Token::Assign,
             Token::Int("10".into()),
+            Token::Semicolon,
             Token::Let,
             Token::Ident("add".into()),
             Token::Assign,
@@ -156,7 +156,6 @@ mod test {
             Token::Comma,
             Token::Ident("ten".into()),
             Token::Rparen,
-            Token::Eof,
         ];
 
         assert_eq!(expected, tokens);
@@ -168,15 +167,20 @@ mod test {
         let mut tokens: Vec<Token> = vec![];
         let mut lexer = Lexer::new(input.into());
 
-        for _ in 0..8 {
-            tokens.push(lexer.next_token());
+        loop {
+            let token = lexer.next_token();
+
+            match token {
+                Token::Eof => break,
+                _ => tokens.push(token),
+            }
         }
 
         assert_eq!(tokens[0], Token::Assign);
         assert_eq!(tokens[1], Token::Plus);
         assert_eq!(tokens[2], Token::Ident("abc".into()));
-        assert_eq!(tokens[3], Token::Rparen);
-        assert_eq!(tokens[4], Token::Lbrace);
+        assert_eq!(tokens[3], Token::Lparen);
+        assert_eq!(tokens[4], Token::Rparen);
     }
 
     #[test]
@@ -192,7 +196,7 @@ mod test {
         assert_eq!(tokens[0], Token::Assign);
         assert_eq!(tokens[1], Token::Plus);
         assert_eq!(tokens[2], Token::Int("123".into()));
-        assert_eq!(tokens[3], Token::Rparen);
-        assert_eq!(tokens[4], Token::Lbrace);
+        assert_eq!(tokens[3], Token::Lparen);
+        assert_eq!(tokens[4], Token::Rparen);
     }
 }
